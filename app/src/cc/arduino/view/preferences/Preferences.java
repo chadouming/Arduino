@@ -29,14 +29,15 @@
 
 package cc.arduino.view.preferences;
 
-import processing.app.*;
+import processing.app.Base;
+import processing.app.BaseNoGui;
+import processing.app.I18n;
+import processing.app.PreferencesData;
 import processing.app.helpers.FileUtils;
 import processing.app.legacy.PApplet;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.LinkedList;
@@ -188,12 +189,7 @@ public class Preferences extends javax.swing.JDialog {
 
     initComponents();
 
-    Base.registerWindowCloseKeys(getRootPane(), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        cancelButtonActionPerformed(e);
-      }
-    });
+    Base.registerWindowCloseKeys(getRootPane(), this::cancelButtonActionPerformed);
 
     showPrerefencesData();
   }
@@ -275,6 +271,7 @@ public class Preferences extends javax.swing.JDialog {
     additionalBoardsManagerField.setToolTipText(_("Enter a comma separated list of urls"));
 
     extendedAdditionalUrlFieldWindow.setIcon(new ImageIcon(Base.getThemeImage("newwindow.gif", this)));
+    extendedAdditionalUrlFieldWindow.setMargin(new java.awt.Insets(1, 1, 1, 1));
     extendedAdditionalUrlFieldWindow.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         extendedAdditionalUrlFieldWindowActionPerformed(evt);
@@ -285,6 +282,7 @@ public class Preferences extends javax.swing.JDialog {
     morePreferencesLabel.setText(_("More preferences can be edited directly in the file"));
 
     preferencesFileLabel.setText(PreferencesData.getPreferencesFile().getAbsolutePath());
+    preferencesFileLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
     preferencesFileLabel.addMouseListener(new java.awt.event.MouseAdapter() {
       public void mousePressed(java.awt.event.MouseEvent evt) {
         preferencesFileLabelMousePressed(evt);
@@ -360,7 +358,7 @@ public class Preferences extends javax.swing.JDialog {
               .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
               .addComponent(additionalBoardsManagerField, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
               .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-              .addComponent(extendedAdditionalUrlFieldWindow, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+              .addComponent(extendedAdditionalUrlFieldWindow))
             .addGroup(layout.createSequentialGroup()
               .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(sketchbookLocationLabel)
@@ -425,7 +423,7 @@ public class Preferences extends javax.swing.JDialog {
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
               .addComponent(additionalBoardsManagerLabel)
               .addComponent(additionalBoardsManagerField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addComponent(extendedAdditionalUrlFieldWindow, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(extendedAdditionalUrlFieldWindow))
           .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
           .addComponent(morePreferencesLabel)
           .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -460,12 +458,7 @@ public class Preferences extends javax.swing.JDialog {
   private void extendedAdditionalUrlFieldWindowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_extendedAdditionalUrlFieldWindowActionPerformed
     final AdditionalBoardsManagerURLTextArea additionalBoardsManagerURLTextArea = new AdditionalBoardsManagerURLTextArea(this);
     additionalBoardsManagerURLTextArea.setText(additionalBoardsManagerField.getText());
-    additionalBoardsManagerURLTextArea.onOk(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        additionalBoardsManagerField.setText(additionalBoardsManagerURLTextArea.getText());
-      }
-    });
+    additionalBoardsManagerURLTextArea.onOk(e -> additionalBoardsManagerField.setText(additionalBoardsManagerURLTextArea.getText()));
     additionalBoardsManagerURLTextArea.setVisible(true);
   }//GEN-LAST:event_extendedAdditionalUrlFieldWindowActionPerformed
 
@@ -478,7 +471,7 @@ public class Preferences extends javax.swing.JDialog {
   }//GEN-LAST:event_preferencesFileLabelMousePressed
 
   private void preferencesFileLabelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_preferencesFileLabelMouseExited
-    preferencesFileLabel.setForeground(Color.BLACK);
+    preferencesFileLabel.setForeground(new Color(76, 76, 76));
   }//GEN-LAST:event_preferencesFileLabelMouseExited
 
   private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
@@ -493,9 +486,7 @@ public class Preferences extends javax.swing.JDialog {
     }
 
     savePreferencesData();
-    for (Editor editor : base.getEditors()) {
-      editor.applyPreferences();
-    }
+    base.getEditors().forEach(processing.app.Editor::applyPreferences);
     cancelButtonActionPerformed(evt);
   }//GEN-LAST:event_okButtonActionPerformed
 
@@ -518,7 +509,7 @@ public class Preferences extends javax.swing.JDialog {
   // End of variables declaration//GEN-END:variables
 
   private java.util.List<String> validateData() {
-    java.util.List<String> errors = new LinkedList<String>();
+    java.util.List<String> errors = new LinkedList<>();
     if (FileUtils.isSubDirectory(new File(sketchbookLocationField.getText()), new File(PreferencesData.get("runtime.ide.path")))) {
       errors.add(_("The specified sketchbook folder contains your copy of the IDE.\nPlease choose a different folder for your sketchbook."));
     }
