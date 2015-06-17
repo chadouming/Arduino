@@ -126,14 +126,19 @@ void user_rf_pre_init() {
 
 extern "C" {
 void user_init(void) {
-    uart_div_modify(0, UART_CLK_FREQ / (74480));
+    struct rst_info *rtc_info_ptr = system_get_rst_info();
 
-    system_rtc_mem_read(0, &resetInfo, sizeof(struct rst_info));
-    if(resetInfo.reason == REASON_WDT_RST || resetInfo.reason == REASON_EXCEPTION_RST) {
-        os_printf("Last Reset:\n - flag=%d\n - Fatal exception (%d):\n - epc1=0x%08x,epc2=0x%08x,epc3=0x%08x,excvaddr=0x%08x,depc=0x%08x\n", resetInfo.reason, resetInfo.exccause, resetInfo.epc1, resetInfo.epc2, resetInfo.epc3, resetInfo.excvaddr, resetInfo.depc);
+    memcpy((void *) &resetInfo, (void *) rtc_info_ptr, sizeof(resetInfo));
+
+    os_printf("Last reset reason: 0x%02X\n", resetInfo.reason);
+
+
+    if(resetInfo.reason == REASON_WDT_RST || resetInfo.reason == REASON_EXCEPTION_RST || resetInfo.reason == REASON_SOFT_WDT_RST) {
+        if(resetInfo.reason == REASON_EXCEPTION_RST) {
+            os_printf("Fatal exception (%d):\n", resetInfo.exccause);
+        }
+        os_printf("epc1=0x%08x, epc2=0x%08x, epc3=0x%08x, excvaddr=0x%08x, depc=0x%08x\n", resetInfo.epc1, resetInfo.epc2, resetInfo.epc3, resetInfo.excvaddr, resetInfo.depc);
     }
-    struct rst_info info = { 0 };
-    system_rtc_mem_write(0, &info, sizeof(struct rst_info));
 
     uart_div_modify(0, UART_CLK_FREQ / (115200));
 
