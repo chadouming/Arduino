@@ -172,7 +172,7 @@ public class Serial implements SerialPortEventListener {
    * coming from serial port.
    */
   protected void message(char[] chars, int length) {
-    // Empty
+	// Empty
   }
 
 

@@ -180,7 +180,7 @@ public abstract class AbstractMonitor extends JFrame implements ActionListener {
         }
       }
     }
-
+    
     updateBuffer = new StringBuffer(1048576);
     updateTimer = new Timer(33, this);  // redraw serial monitor at 30 Hz
     updateTimer.start();
@@ -275,7 +275,7 @@ public abstract class AbstractMonitor extends JFrame implements ActionListener {
   public void open() throws Exception {
     closed = false;
   }
-
+  
   public void close() throws Exception {
     closed = true;
   }
@@ -306,13 +306,13 @@ public abstract class AbstractMonitor extends JFrame implements ActionListener {
       return;
     }
 
-    //System.out.println("gui append " + s.length());
-    if (autoscrollBox.isSelected()) {
-      textArea.appendTrim(s);
-      textArea.setCaretPosition(textArea.getDocument().getLength());
-    } else {
-      textArea.appendNoTrim(s);
+      //System.out.println("gui append " + s.length());
+      if (autoscrollBox.isSelected()) {
+        textArea.appendTrim(s);
+        textArea.setCaretPosition(textArea.getDocument().getLength());
+      } else {
+        textArea.appendNoTrim(s);
+      }
     }
-  }
 
 }
