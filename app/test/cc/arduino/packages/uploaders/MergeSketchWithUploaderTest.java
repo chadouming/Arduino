@@ -24,48 +24,44 @@
  * invalidate any other reasons why the executable file might be covered by
  * the GNU General Public License.
  *
- * Copyright 2013 Arduino LLC (http://www.arduino.cc/)
+ * Copyright 2015 Arduino LLC (http://www.arduino.cc/)
  */
 
-package cc.arduino.packages.discoverers.network;
+package cc.arduino.packages.uploaders;
 
-import javax.jmdns.NetworkTopologyDiscovery;
-import java.net.InetAddress;
-import java.util.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import processing.app.helpers.FileUtils;
 
-public class NetworkChecker extends TimerTask {
+import java.io.File;
 
-  private final NetworkTopologyListener topologyListener;
-  private final NetworkTopologyDiscovery topology;
+import static org.junit.Assert.assertEquals;
 
-  private Set<InetAddress> knownAddresses;
+public class MergeSketchWithUploaderTest {
 
-  public NetworkChecker(NetworkTopologyListener topologyListener, NetworkTopologyDiscovery topology) {
-    super();
-    this.topologyListener = topologyListener;
-    this.topology = topology;
-    this.knownAddresses = Collections.synchronizedSet(new HashSet<>());
+  private File sketch;
+
+  @Before
+  public void setup() throws Exception {
+    File originalSketch = new File(MergeSketchWithUploaderTest.class.getResource("/sketch.hex").getFile());
+    sketch = new File(System.getProperty("java.io.tmpdir"), "sketch.hex");
+    FileUtils.copyFile(originalSketch, sketch);
   }
 
-  public void start(Timer timer) {
-    timer.schedule(this, 0, 3000);
+  @After
+  public void removeTmpFile() {
+    sketch.delete();
   }
 
-  @Override
-  public void run() {
-    try {
-      InetAddress[] curentAddresses = topology.getInetAddresses();
-      Set<InetAddress> current = new HashSet<>(curentAddresses.length);
-      for (InetAddress address : curentAddresses) {
-        current.add(address);
-        if (!knownAddresses.contains(address)) {
-          topologyListener.inetAddressAdded(address);
-        }
-      }
-      knownAddresses.stream().filter(address -> !current.contains(address)).forEach(topologyListener::inetAddressRemoved);
-      knownAddresses = current;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+  @Test
+  public void shouldMergeWithOptiboot() throws Exception {
+    assertEquals(11720, sketch.length());
+
+    File bootloader = new File(MergeSketchWithUploaderTest.class.getResource("/optiboot_atmega328.hex").getFile());
+    new MergeSketchWithBooloader().merge(sketch, bootloader);
+    assertEquals(13140, sketch.length());
   }
+
+
 }

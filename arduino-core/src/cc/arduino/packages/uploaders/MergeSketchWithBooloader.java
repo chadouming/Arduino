@@ -24,48 +24,37 @@
  * invalidate any other reasons why the executable file might be covered by
  * the GNU General Public License.
  *
- * Copyright 2013 Arduino LLC (http://www.arduino.cc/)
+ * Copyright 2015 Arduino LLC (http://www.arduino.cc/)
  */
 
-package cc.arduino.packages.discoverers.network;
+package cc.arduino.packages.uploaders;
 
-import javax.jmdns.NetworkTopologyDiscovery;
-import java.net.InetAddress;
-import java.util.*;
+import processing.app.helpers.FileUtils;
 
-public class NetworkChecker extends TimerTask {
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
 
-  private final NetworkTopologyListener topologyListener;
-  private final NetworkTopologyDiscovery topology;
+public class MergeSketchWithBooloader {
 
-  private Set<InetAddress> knownAddresses;
+  public void merge(File sketch, File bootloader) throws IOException {
+    List<String> mergedSketch = FileUtils.readFileToListOfStrings(sketch);
+    mergedSketch.remove(mergedSketch.size() - 1);
+    mergedSketch.addAll(FileUtils.readFileToListOfStrings(bootloader));
 
-  public NetworkChecker(NetworkTopologyListener topologyListener, NetworkTopologyDiscovery topology) {
-    super();
-    this.topologyListener = topologyListener;
-    this.topology = topology;
-    this.knownAddresses = Collections.synchronizedSet(new HashSet<>());
-  }
-
-  public void start(Timer timer) {
-    timer.schedule(this, 0, 3000);
-  }
-
-  @Override
-  public void run() {
+    FileWriter writer = null;
     try {
-      InetAddress[] curentAddresses = topology.getInetAddresses();
-      Set<InetAddress> current = new HashSet<>(curentAddresses.length);
-      for (InetAddress address : curentAddresses) {
-        current.add(address);
-        if (!knownAddresses.contains(address)) {
-          topologyListener.inetAddressAdded(address);
-        }
+      writer = new FileWriter(sketch);
+      for (String line : mergedSketch) {
+        writer.write(line);
+        writer.write("\n");
       }
-      knownAddresses.stream().filter(address -> !current.contains(address)).forEach(topologyListener::inetAddressRemoved);
-      knownAddresses = current;
-    } catch (Exception e) {
-      e.printStackTrace();
+    } finally {
+      if (writer != null) {
+        writer.close();
+      }
     }
   }
+
 }
