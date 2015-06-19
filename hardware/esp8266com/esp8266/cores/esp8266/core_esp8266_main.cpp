@@ -59,7 +59,7 @@ void preloop_update_frequency() {
 extern void (*__init_array_start)(void);
 extern void (*__init_array_end)(void);
 
-static cont_t g_cont;
+cont_t g_cont __attribute__ ((aligned (16)));
 static os_event_t g_loop_queue[LOOP_QUEUE_SIZE];
 
 static uint32_t g_micros_at_task_start;
@@ -118,27 +118,25 @@ void init_done() {
     esp_schedule();
 }
 
+extern "C" int __get_rf_mode()  __attribute__((weak));
+extern "C" int __get_rf_mode()
+{
+    return 0;  // default mode
+}
+
 extern "C" {
 void user_rf_pre_init() {
-    
+    system_phy_set_rfoption(__get_rf_mode());
 }
 }
 
 extern "C" {
 void user_init(void) {
-    struct rst_info *rtc_info_ptr = system_get_rst_info();
+    uart_div_modify(0, UART_CLK_FREQ / (74480));
 
-    memcpy((void *) &resetInfo, (void *) rtc_info_ptr, sizeof(resetInfo));
-
-    os_printf("Last reset reason: 0x%02X\n", resetInfo.reason);
-
-
-    if(resetInfo.reason == REASON_WDT_RST || resetInfo.reason == REASON_EXCEPTION_RST || resetInfo.reason == REASON_SOFT_WDT_RST) {
-        if(resetInfo.reason == REASON_EXCEPTION_RST) {
-            os_printf("Fatal exception (%d):\n", resetInfo.exccause);
-        }
-        os_printf("epc1=0x%08x, epc2=0x%08x, epc3=0x%08x, excvaddr=0x%08x, depc=0x%08x\n", resetInfo.epc1, resetInfo.epc2, resetInfo.epc3, resetInfo.excvaddr, resetInfo.depc);
-    }
+    system_rtc_mem_read(0, &resetInfo, sizeof(struct rst_info));
+    struct rst_info info = { 0 };
+    system_rtc_mem_write(0, &info, sizeof(struct rst_info));
 
     uart_div_modify(0, UART_CLK_FREQ / (115200));
 
