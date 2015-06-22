@@ -106,7 +106,6 @@ public class SketchTextArea extends RSyntaxTextArea {
       IOUtils.closeQuietly(defaultXmlInputStream);
     }
 
-    setForeground(processing.app.Theme.getColor("editor.fgcolor"));
     setBackground(processing.app.Theme.getColor("editor.bgcolor"));
     setCurrentLineHighlightColor(processing.app.Theme.getColor("editor.linehighlight.color"));
     setCaretColor(processing.app.Theme.getColor("editor.caret.color"));
@@ -126,9 +125,14 @@ public class SketchTextArea extends RSyntaxTextArea {
     setSyntaxTheme(TokenTypes.COMMENT_EOL, "comment1");
     setSyntaxTheme(TokenTypes.COMMENT_KEYWORD, "comment1");
     setSyntaxTheme(TokenTypes.COMMENT_MARKUP, "comment1");
+    setSyntaxTheme(TokenTypes.COMMENT_MULTILINE, "comment2");
     setSyntaxTheme(TokenTypes.LITERAL_BOOLEAN, "literal_boolean");
     setSyntaxTheme(TokenTypes.LITERAL_CHAR, "literal_char");
     setSyntaxTheme(TokenTypes.LITERAL_STRING_DOUBLE_QUOTE, "literal_string_double_quote");
+
+    Style style = getSyntaxScheme().getStyle(TokenTypes.IDENTIFIER);
+    style.foreground = processing.app.Theme.getColor("editor.fgcolor");
+    getSyntaxScheme().setStyle(TokenTypes.IDENTIFIER, style);
   }
 
   private void setSyntaxTheme(int tokenType, String id) {
@@ -391,7 +395,7 @@ public class SketchTextArea extends RSyntaxTextArea {
         // Copy token, viewToModel() unfortunately modifies Token
         t = new TokenImpl(t);
       }
-      Cursor c2 = null;
+      Cursor c2;
       if (t != null && t.isHyperlink()) {
         if (hoveredOverLinkOffset == -1 ||
           hoveredOverLinkOffset != t.getOffset()) {

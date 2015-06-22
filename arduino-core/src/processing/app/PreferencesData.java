@@ -146,6 +146,11 @@ public class PreferencesData {
     return (value == null) ? defaultValue : value;
   }
 
+  static public String getNonEmpty(String attribute, String defaultValue) {
+    String value = get(attribute, defaultValue);
+    return ("".equals(value)) ? defaultValue : value;
+  }
+
   public static boolean has(String key) {
     return prefs.containsKey(key);
   }
@@ -193,6 +198,18 @@ public class PreferencesData {
 
   static public void setInteger(String key, int value) {
     set(key, String.valueOf(value));
+  }
+
+  static public float getFloat(String attribute, float defaultValue) {
+    if (has(attribute)) {
+      return getFloat(attribute);
+    }
+
+    return defaultValue;
+  }
+
+  static public float getFloat(String attribute) {
+    return Float.parseFloat(get(attribute));
   }
 
   // get a copy of the Preferences

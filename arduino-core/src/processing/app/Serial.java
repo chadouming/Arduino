@@ -50,7 +50,7 @@ public class Serial implements SerialPortEventListener {
   public Serial() throws SerialException {
     this(PreferencesData.get("serial.port"),
             PreferencesData.getInteger("serial.debug_rate"),
-            PreferencesData.get("serial.parity").charAt(0),
+            PreferencesData.getNonEmpty("serial.parity", "N").charAt(0),
             PreferencesData.getInteger("serial.databits"),
             Float.parseFloat(PreferencesData.get("serial.stopbits")),
 			BaseNoGui.getBoardPreferences().get("serial.disableRTS") == null,
@@ -59,7 +59,7 @@ public class Serial implements SerialPortEventListener {
 
   public Serial(int irate) throws SerialException {
     this(PreferencesData.get("serial.port"), irate,
-            PreferencesData.get("serial.parity").charAt(0),
+            PreferencesData.getNonEmpty("serial.parity", "N").charAt(0),
             PreferencesData.getInteger("serial.databits"),
             Float.parseFloat(PreferencesData.get("serial.stopbits")),
 			BaseNoGui.getBoardPreferences().get("serial.disableRTS") == null,
@@ -76,7 +76,7 @@ public class Serial implements SerialPortEventListener {
 
   public Serial(String iname) throws SerialException {
     this(iname, PreferencesData.getInteger("serial.debug_rate"),
-            PreferencesData.get("serial.parity").charAt(0),
+            PreferencesData.getNonEmpty("serial.parity", "N").charAt(0),
             PreferencesData.getInteger("serial.databits"),
             Float.parseFloat(PreferencesData.get("serial.stopbits")),
 			BaseNoGui.getBoardPreferences().get("serial.disableRTS") == null,
