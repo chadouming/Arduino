@@ -125,6 +125,10 @@ void EspClass::reset(void)
 void EspClass::restart(void)
 {
     system_restart();
+    delay(5000);
+    system_restart();
+    delay(20000);
+    reset(); // if we still have not reset force it!
 }
 
 uint16_t EspClass::getVcc(void)
@@ -410,6 +414,13 @@ bool EspClass::updateSketch(Stream& in, uint32_t size) {
             return false;
         }
 
+        if(addr == freeSpaceStart) {
+            // check for valid first magic byte
+            if(*((uint8 *) buffer.get()) != 0xE9) {
+                return false;
+            }
+        }
+
         noInterrupts();
         rc = SPIWrite(addr, buffer.get(), willRead);
         interrupts();
@@ -436,7 +447,7 @@ bool EspClass::updateSketch(Stream& in, uint32_t size) {
     ebcmd.args[1] = 0x00000;
     ebcmd.args[2] = size;
     eboot_command_write(&ebcmd);
-    
+
     ESP.restart();
     return true; // never happens
 }
