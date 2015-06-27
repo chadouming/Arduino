@@ -175,6 +175,7 @@ void ESP8266WiFiClass::softAP(const char* ssid)
 
 void ESP8266WiFiClass::softAP(const char* ssid, const char* passphrase, int channel)
 {
+    _useApMode = true;
     if(_useClientMode) {
         // turn on AP+STA mode
         mode(WIFI_AP_STA);
