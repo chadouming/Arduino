@@ -63,12 +63,7 @@ public abstract class ContributedLibrary extends DownloadableContribution {
 
   public abstract List<ContributedLibraryReference> getRequires();
 
-  public static final Comparator<ContributedLibrary> CASE_INSENSITIVE_ORDER = new Comparator<ContributedLibrary>() {
-    @Override
-    public int compare(ContributedLibrary o1, ContributedLibrary o2) {
-      return o1.getName().compareToIgnoreCase(o2.getName());
-    }
-  };
+  public static final Comparator<ContributedLibrary> CASE_INSENSITIVE_ORDER = (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName());
 
   /**
    * Returns <b>true</b> if the library declares to support the specified
@@ -142,7 +137,10 @@ public abstract class ContributedLibrary extends DownloadableContribution {
     String thisVersion = getParsedVersion();
     String otherVersion = ((ContributedLibrary) obj).getParsedVersion();
 
-    boolean versionEquals = thisVersion != null && otherVersion != null && thisVersion.equals(otherVersion);
+    // Important: for legacy libs, versions are null.  Two legacy libs must
+    // always pass this test.
+    boolean versionEquals = thisVersion == otherVersion ||
+      (thisVersion != null && otherVersion != null && thisVersion.equals(otherVersion));
 
     String thisName = getName();
     String otherName = ((ContributedLibrary) obj).getName();
