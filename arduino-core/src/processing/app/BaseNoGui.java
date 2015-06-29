@@ -36,6 +36,10 @@ public class BaseNoGui {
   public static final String VERSION_NAME = "1.6.6";
   public static final String VERSION_NAME_LONG;
 
+  // Current directory to use for relative paths specified on the
+  // commandline
+  static String currentDirectory = System.getProperty("user.dir");
+
   static {
     String versionNameLong = VERSION_NAME;
     File hourlyBuildTxt = new File(getContentFile("lib"), "hourlyBuild.txt");
@@ -51,10 +55,6 @@ public class BaseNoGui {
   }
 
   static File buildFolder;
-
-  // Current directory to use for relative paths specified on the
-  // commandline
-  static String currentDirectory = System.getProperty("user.dir");
 
   private static DiscoveryManager discoveryManager = new DiscoveryManager();
   
@@ -186,21 +186,12 @@ public class BaseNoGui {
   }
 
   static public File getContentFile(String name) {
-    File path = new File(System.getProperty("user.dir"));
-
-    if (OSUtils.isMacOS()) {
-      if (System.getProperty("WORK_DIR") != null) {
-        path = new File(System.getProperty("WORK_DIR"));
-      } else {
-        try {
-          path = new File(BaseNoGui.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile();
-        } catch (URISyntaxException e) {
-          throw new RuntimeException(e);
-        }
-      }
+    String appDir = System.getProperty("APP_DIR");
+    if (appDir == null || appDir.length() == 0) {
+      appDir = currentDirectory;
     }
-
-    return new File(path, name);
+    File installationFolder = new File(appDir);
+    return new File(installationFolder, name);
   }
 
   static public TargetPlatform getCurrentTargetPlatformFromPackage(String pack) {
@@ -974,11 +965,6 @@ public class BaseNoGui {
       if (args[i].equals("--preferences-file")) {
         ++i;
         preferencesFile = args[i];
-        continue;
-      }
-      if (args[i].equals("--curdir")) {
-        i++;
-        currentDirectory = args[i];
         continue;
       }
     }
