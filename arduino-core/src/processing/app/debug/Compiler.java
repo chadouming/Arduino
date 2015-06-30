@@ -26,7 +26,12 @@ package processing.app.debug;
 import static processing.app.I18n._;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.Stream;
 
 import cc.arduino.MyStreamPumper;
 import cc.arduino.packages.BoardPort;
@@ -34,6 +39,7 @@ import cc.arduino.packages.Uploader;
 import cc.arduino.packages.UploaderFactory;
 
 import cc.arduino.packages.uploaders.MergeSketchWithBooloader;
+import cc.arduino.utils.Pair;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.exec.*;
 import processing.app.BaseNoGui;
@@ -57,6 +63,7 @@ public class Compiler implements MessageConsumer {
    * used for the last build.
    */
   static final public String BUILD_PREFS_FILE = "buildprefs.txt";
+  private static final int ADDITIONAL_FILES_COPY_MAX_DEPTH = 5;
 
   private SketchData sketch;
   private PreferencesMap prefs;
@@ -382,16 +389,22 @@ public class Compiler implements MessageConsumer {
     for (UserLibrary lib : importedLibraries) {
       if (verbose) {
         String legacy = "";
-        if (lib instanceof LegacyUserLibrary)
+        if (lib instanceof LegacyUserLibrary) {
           legacy = "(legacy)";
-        System.out.println(I18n
-            .format(_("Using library {0} in folder: {1} {2}"), lib.getName(),
-                    lib.getInstalledFolder(), legacy));
+        }
+
+        if (lib.getParsedVersion() == null) {
+          System.out.println(I18n.format(_("Using library {0} in folder: {1} {2}"), lib.getName(), lib.getInstalledFolder(), legacy));
+        } else {
+          System.out.println(I18n.format(_("Using library {0} at version {1} in folder: {2} {3}"), lib.getName(), lib.getParsedVersion(), lib.getInstalledFolder(), legacy));
+        }
       }
       includeFolders.add(lib.getSrcFolder());
     }
-    if (verbose)
+
+    if (verbose) {
       System.out.println();
+    }
 
     List<String> archs = new ArrayList<String>();
     archs.add(BaseNoGui.getTargetPlatform().getId());
@@ -1392,7 +1405,6 @@ public class Compiler implements MessageConsumer {
     }
 
     // 3. then loop over the code[] and save each .java file
-
     for (SketchCode sc : sketch.getCodes()) {
       if (sc.isExtension(SketchData.OTHER_ALLOWED_EXTENSIONS)) {
         // no pre-processing services necessary for java files
@@ -1412,8 +1424,33 @@ public class Compiler implements MessageConsumer {
         sc.addPreprocOffset(headerOffset);
       }
     }
+
+    copyAdditionalFilesToBuildFolderSavingOriginalFolderStructure(sketch, buildPath);
   }
 
+  private void copyAdditionalFilesToBuildFolderSavingOriginalFolderStructure(SketchData sketch, String buildPath) throws RunnerException {
+    Path sketchPath = Paths.get(sketch.getFolder().getAbsolutePath());
+    Stream<Path> otherFilesStream;
+    try {
+      otherFilesStream = Files.find(sketchPath, ADDITIONAL_FILES_COPY_MAX_DEPTH, (path, attribs) -> !attribs.isDirectory() && isPathInASubfolder(sketchPath, path) && FileUtils.hasExtension(path.toFile(), SketchData.OTHER_ALLOWED_EXTENSIONS));
+    } catch (IOException e) {
+      throw new RunnerException(e);
+    }
+    otherFilesStream.map((path) -> new Pair<>(path, Paths.get(buildPath, sketchPath.relativize(path).toString())))
+      .forEach((pair) -> {
+        try {
+          Files.createDirectories(pair.value.getParent());
+          Files.copy(pair.key, pair.value, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+          e.printStackTrace();
+          throw new RuntimeException(I18n.format(_("Problem moving {0} to the build folder"), sketchPath.relativize(pair.key).toString()));
+        }
+      });
+  }
+
+  private boolean isPathInASubfolder(Path sketchPath, Path path) {
+    return sketchPath.relativize(path).getNameCount() > 1;
+  }
 
   /**
    * List of library folders.
