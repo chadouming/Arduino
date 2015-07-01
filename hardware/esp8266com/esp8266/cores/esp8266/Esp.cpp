@@ -409,9 +409,6 @@ bool EspClass::updateSketch(Stream& in, uint32_t size, bool restartOnFail) {
             }
             //we at least got some data, lets write it to the flash
             willRead = rd;
-
-            if(restartOnFail) ESP.restart();
-            return false;
         }
         
         if(addr == freeSpaceStart) {
