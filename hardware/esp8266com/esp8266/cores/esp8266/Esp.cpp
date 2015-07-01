@@ -358,10 +358,12 @@ uint32_t EspClass::getFreeSketchSpace() {
     return freeSpaceEnd - freeSpaceStart;
 }
 
-bool EspClass::updateSketch(Stream& in, uint32_t size) {
+bool EspClass::updateSketch(Stream& in, uint32_t size, bool restartOnFail) {
 
-    if (size > getFreeSketchSpace())
+    if (size > getFreeSketchSpace()){
+        if(restartOnFail) ESP.restart();
         return false;
+    }
 
     uint32_t usedSize = getSketchSize();
     uint32_t freeSpaceStart = (usedSize + FLASH_SECTOR_SIZE - 1) & (~(FLASH_SECTOR_SIZE - 1));
@@ -374,8 +376,10 @@ bool EspClass::updateSketch(Stream& in, uint32_t size) {
     noInterrupts();
     int rc = SPIEraseAreaEx(freeSpaceStart, roundedSize);
     interrupts();
-    if (rc)
+    if (rc){
+        if(restartOnFail) ESP.restart();
         return false;
+    }
 
 #ifdef DEBUG_SERIAL
     DEBUG_SERIAL.println("erase done");
@@ -395,14 +399,22 @@ bool EspClass::updateSketch(Stream& in, uint32_t size) {
         size_t rd = in.readBytes(buffer.get(), willRead);
         if (rd != willRead) {
 #ifdef DEBUG_SERIAL
-            DEBUG_SERIAL.println("stream read failed");
+            DEBUG_SERIAL.printf("stream read less: %u/%u\n", rd, willRead);
 #endif
-            return false;
+            if(rd == 0){ //we got nothing from the client
+              //we should actually give it a bit of a chance to send us something
+              //connection could be slow ;)
+              if(restartOnFail) ESP.restart();
+              return false;
+            }
+            //we at least got some data, lets write it to the flash
+            willRead = rd;
         }
-
+        
         if(addr == freeSpaceStart) {
             // check for valid first magic byte
             if(*((uint8 *) buffer.get()) != 0xE9) {
+                if(restartOnFail) ESP.restart();
                 return false;
             }
         }
@@ -414,6 +426,7 @@ bool EspClass::updateSketch(Stream& in, uint32_t size) {
 #ifdef DEBUG_SERIAL
             DEBUG_SERIAL.println("write failed");
 #endif            
+            if(restartOnFail) ESP.restart();
             return false;
         }
 
