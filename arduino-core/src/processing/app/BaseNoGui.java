@@ -1,5 +1,6 @@
 package processing.app;
 
+import cc.arduino.contributions.GPGDetachedSignatureVerifier;
 import cc.arduino.contributions.SignatureVerificationFailedException;
 import cc.arduino.contributions.libraries.LibrariesIndexer;
 import cc.arduino.contributions.packages.ContributedTool;
@@ -20,8 +21,10 @@ import processing.app.legacy.PApplet;
 import processing.app.packages.LibraryList;
 import processing.app.packages.UserLibrary;
 
-import java.io.*;
-import java.net.URISyntaxException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -596,7 +599,7 @@ public class BaseNoGui {
   }
 
   static public void initPackages() throws Exception {
-    indexer = new ContributionsIndexer(BaseNoGui.getSettingsFolder(), BaseNoGui.getPlatform());
+    indexer = new ContributionsIndexer(BaseNoGui.getSettingsFolder(), BaseNoGui.getPlatform(), new GPGDetachedSignatureVerifier());
     File indexFile = indexer.getIndexFile("package_index.json");
     File defaultPackageJsonFile = new File(getContentFile("dist"), "package_index.json");
     if (!indexFile.isFile() || (defaultPackageJsonFile.isFile() && defaultPackageJsonFile.lastModified() > indexFile.lastModified())) {
@@ -635,7 +638,7 @@ public class BaseNoGui {
     loadHardware(getHardwareFolder());
     loadContributedHardware(indexer);
     loadHardware(getSketchbookHardwareFolder());
-    createToolPreferences(indexer);
+    createToolPreferences(indexer.getInstalledTools(), true);
 
     librariesIndexer = new LibrariesIndexer(BaseNoGui.getSettingsFolder(), indexer);
     File librariesIndexFile = librariesIndexer.getIndexFile();
@@ -826,12 +829,13 @@ public class BaseNoGui {
     }
   }
 
-  static private void createToolPreferences(ContributionsIndexer indexer) {
-    // Remove previous runtime preferences
-    final String prefix = "runtime.tools.";
-    PreferencesData.removeAllKeysWithPrefix(prefix);
+  public static void createToolPreferences(Collection<ContributedTool> installedTools, boolean removeOldKeys) {
+    String prefix = "runtime.tools.";
+    if (removeOldKeys) {
+      PreferencesData.removeAllKeysWithPrefix(prefix);
+    }
 
-    for (ContributedTool tool : indexer.getInstalledTools()) {
+    for (ContributedTool tool : installedTools) {
       File installedFolder = tool.getDownloadableContribution(getPlatform()).getInstalledFolder();
       if (installedFolder != null) {
         PreferencesData.set(prefix + tool.getName() + ".path", installedFolder.getAbsolutePath());

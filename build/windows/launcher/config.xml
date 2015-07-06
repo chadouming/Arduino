@@ -31,7 +31,7 @@
     <cp>%EXEDIR%/lib/jsch-0.1.50.jar</cp>
     <cp>%EXEDIR%/lib/jssc-2.8.0.jar</cp>
     <cp>%EXEDIR%/lib/pde.jar</cp>
-    <cp>%EXEDIR%/lib/rsyntaxtextarea-2.5.6.1+arduino.jar</cp>
+    <cp>%EXEDIR%/lib/rsyntaxtextarea-2.5.7.1+arduino.jar</cp>
   </classPath>
   <jre>
     <path>java</path>
@@ -40,6 +40,9 @@
     <opt>-Dsun.java2d.d3d=false</opt>
     <opt>-DAPP_DIR="%EXEDIR%"</opt>
   </jre>
+  <splash>
+    <file>lib/splash.bmp</file>
+  </splash>
   <versionInfo>
     <fileDescription>Arduino IDE</fileDescription>
     <copyright>Arduino LLC</copyright>

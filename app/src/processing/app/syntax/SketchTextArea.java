@@ -32,13 +32,14 @@ package processing.app.syntax;
 
 import org.apache.commons.compress.utils.IOUtils;
 import org.fife.ui.rsyntaxtextarea.*;
-import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rsyntaxtextarea.Token;
-import org.fife.ui.rsyntaxtextarea.focusabletip.FocusableTip;
 import org.fife.ui.rtextarea.RTextArea;
 import org.fife.ui.rtextarea.RTextAreaUI;
 import org.fife.ui.rtextarea.RUndoManager;
-import processing.app.*;
+import processing.app.Base;
+import processing.app.BaseNoGui;
+import processing.app.EditorListener;
+import processing.app.PreferencesData;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -65,17 +66,11 @@ import java.util.logging.Logger;
  * Arduino Sketch code editor based on RSyntaxTextArea (http://fifesoft.com/rsyntaxtextarea)
  *
  * @author Ricardo JL Rufino (ricardo@criativasoft.com.br)
- * @date 20/04/2015
  * @since 1.6.4
  */
 public class SketchTextArea extends RSyntaxTextArea {
 
   private final static Logger LOG = Logger.getLogger(SketchTextArea.class.getName());
-
-  /**
-   * The last docTooltip displayed.
-   */
-  private FocusableTip docTooltip;
 
   private EditorListener editorListener;
 
@@ -107,6 +102,7 @@ public class SketchTextArea extends RSyntaxTextArea {
     }
 
     setBackground(processing.app.Theme.getColor("editor.bgcolor"));
+    setHighlightCurrentLine(processing.app.Theme.getBoolean("editor.linehighlight"));
     setCurrentLineHighlightColor(processing.app.Theme.getColor("editor.linehighlight.color"));
     setCaretColor(processing.app.Theme.getColor("editor.caret.color"));
     setSelectedTextColor(null);
@@ -171,15 +167,6 @@ public class SketchTextArea extends RSyntaxTextArea {
     return this.getSelectedText() != null;
   }
 
-  public void setSelectedText(String text) {
-
-    int old = getTextMode();
-    setTextMode(OVERWRITE_MODE);
-    replaceSelection(text);
-    setTextMode(old);
-
-  }
-
   public void processKeyEvent(KeyEvent evt) {
 
     // this had to be added because the menu key events weren't making it up to the frame.
@@ -231,16 +218,6 @@ public class SketchTextArea extends RSyntaxTextArea {
       int end = getLineEndOffset(line);
       getDocument().getText(offset, end - offset, segment);
     } catch (BadLocationException ignored) {
-    }
-  }
-
-  public String getTextLine(int line) {
-    try {
-      int offset = getLineStartOffset(line);
-      int end = getLineEndOffset(line);
-      return getDocument().getText(offset, end - offset);
-    } catch (BadLocationException e) {
-      return null;
     }
   }
 
