@@ -21,9 +21,6 @@ def serve(remoteAddr, remotePort, filename):
     print('Listen Failed', file=sys.stderr)
     return 1
  
-  sock2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  remote_address = (remoteAddr, int(remotePort))
-
   content_size = os.path.getsize(filename)
   print('Upload size: %d' % content_size, file=sys.stderr)
   message = '%d %d %d\n' % (0, serverPort, content_size)
